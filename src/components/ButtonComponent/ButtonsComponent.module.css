@@ -1,0 +1,24 @@
+.buttons {
+    width: 100vw;
+    height: 12vh;
+    background-color: #111111;
+    color: lavender;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+button {
+    height: 5vh;
+    width: 10vw;
+    border-radius: 10px;
+    border: black 1px solid;
+    background-color: dimgrey;
+    color: white;
+    transition: ease-in 0.1s;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: lightslategrey;
+}

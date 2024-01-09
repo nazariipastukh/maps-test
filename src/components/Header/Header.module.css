@@ -1,0 +1,13 @@
+.header {
+    width: 100vw;
+    height: 8vh;
+    background-color: #111111;
+    color: lavender;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.header p {
+    font-size: 20px;
+}
