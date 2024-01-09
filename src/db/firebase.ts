@@ -11,8 +11,10 @@ import {
     serverTimestamp
 } from 'firebase/firestore';
 
+const firebaseApi = process.env.REACT_APP_API_FIREBASE
+
 const firebaseConfig = {
-    apiKey: "AIzaSyCVStmYSRCc2w2UsfFqaTkjXxESzPncl9I",
+    apiKey: firebaseApi,
     authDomain: "maps-test-c13a0.firebaseapp.com",
     projectId: "maps-test-c13a0",
     storageBucket: "maps-test-c13a0.appspot.com",
