@@ -64,10 +64,8 @@ export const MapComponent: React.FC = () => {
         });
     };
 
-    const mapsApi = process.env.REACT_APP_API_MAPS
-
     return (
-        <LoadScript googleMapsApiKey={mapsApi}>
+        <LoadScript googleMapsApiKey="AIzaSyDlCbg2r5oHeIJDNWUYcqVRUMSsCgQvCNw">
             <GoogleMap
                 mapContainerStyle={{width: '100%', height: '80vh'}}
                 center={latestCoords}
