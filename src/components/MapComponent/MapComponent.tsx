@@ -1,7 +1,21 @@
 import React, {useState, useEffect} from 'react';
 import {GoogleMap, LoadScript} from '@react-google-maps/api';
 
-import {db, GeoPoint, collection, addDoc, getDocs, deleteDoc, updateDoc, doc, serverTimestamp} from '../../db/firebase';
+import {
+    addDoc,
+    collection,
+    getDocs,
+    GeoPoint,
+    serverTimestamp,
+    deleteDoc,
+    updateDoc,
+    doc,
+    getDoc,
+    query,
+    where
+} from 'firebase/firestore'
+import {db, loadMarkersFromFirebase} from '../../db/firebase';
+
 import {ButtonsComponent} from '../ButtonComponent';
 import {MarkersComponent} from './Markers'
 import {MarkerType} from "../../interfaces/interface";
@@ -9,7 +23,11 @@ import {MarkerType} from "../../interfaces/interface";
 export const MapComponent: React.FC = () => {
     const [markers, setMarkers] = useState<MarkerType[]>([]);
     const [map, setMap] = useState<google.maps.Map | null>(null);
-    const [latestCoords, setLatestCoords] = useState<google.maps.LatLngLiteral>({ lat: 40, lng: -74.5 });
+    const [latestCoords, setLatestCoords] = useState<google.maps.LatLngLiteral>({lat: 49.8326598, lng: 23.9298351});
+
+    useEffect(() => {
+        loadMarkersFromFirebase(setMarkers);
+    }, []);
 
     const onMapLoad = (map: google.maps.Map) => setMap(map);
 
@@ -23,20 +41,36 @@ export const MapComponent: React.FC = () => {
         const newMarker: MarkerType = {
             id: markers.length + 1,
             lat: event.latLng.lat(),
-            lng: event.latLng.lng()
+            lng: event.latLng.lng(),
         };
-
         setMarkers([...markers, newMarker]);
         setLatestCoords({lat: newMarker.lat, lng: newMarker.lng});
 
-        await addDoc(collection(db, 'quests'), {
+        const questsRef = collection(db, 'quests');
+        await addDoc(questsRef, {
+            id: newMarker.id,
             location: new GeoPoint(newMarker.lat, newMarker.lng),
             timestamp: serverTimestamp(),
-            next: null
+            next: null,
         });
     };
 
-    const deleteMarker = (id: number) => setMarkers(markers.filter(marker => marker.id !== id));
+    const deleteMarker = async (id: number) => {
+        try {
+            const questsRef = collection(db, 'quests');
+            const q = query(questsRef, where('id', '==', id));
+            const querySnapshot = await getDocs(q);
+
+            querySnapshot.forEach(async (doc) => {
+                await deleteDoc(doc.ref);
+            });
+
+            const newMarkers = markers.filter(marker => marker.id !== id);
+            setMarkers(newMarkers);
+        } catch (error) {
+            console.error(`Error deleting marker from Firebase: ${error}`);
+        }
+    };
 
     const deleteAllMarkers = async () => {
         setMarkers([]);
@@ -52,19 +86,23 @@ export const MapComponent: React.FC = () => {
         setMarkers(markers.map(marker => (marker.id === id ? {...marker, ...newCoords} : marker)));
     };
 
-    const handleDragEnd = (id: number, event: google.maps.MapMouseEvent) => {
+    const handleDragEnd = async (id: number, event: google.maps.MapMouseEvent) => {
+        const questRef = doc(db, 'quests', id.toString());
+        const docSnapshot = await getDoc(questRef);
+
+        if (docSnapshot.exists()) {
+            updateDoc(questRef, {location: new GeoPoint(event.latLng.lat(), event.latLng.lng())});
+        } else {
+            console.warn(`Document with ID ${id} doesn't exist.`);
+        }
+
         updateMarker(id, {
             lat: event.latLng.lat(),
             lng: event.latLng.lng()
         });
-
-        const questRef = doc(db, 'quests', id.toString());
-        updateDoc(questRef, {
-            location: new GeoPoint(event.latLng.lat(), event.latLng.lng())
-        });
     };
 
-    const mapsApi = process.env.REACT_APP_API_MAPS
+    const mapsApi = 'AIzaSyDlCbg2r5oHeIJDNWUYcqVRUMSsCgQvCNw'
 
     return (
         <LoadScript googleMapsApiKey={mapsApi}>
